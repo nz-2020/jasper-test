@@ -1,0 +1,75 @@
+@RequestMapping("testReport")
+    public void genarateReport(HttpServletRequest request, HttpServletResponse responsedata) {
+        responsedata.setContentType("application/pdf");
+        int detailId = Integer.parseInt(request.getParameter("myData"));
+   User user = null;
+        try {
+            HttpSession session = request.getSession();
+            if (session.getAttribute("userName") != null) {
+                user = (User) session.getAttribute("userName");
+            }
+            Connection db = new DBFacade().connect();
+            ServletOutputStream outStream = response.getOutputStream();
+            Map<String, Object> params = new HashMap<String, Object>();
+
+            params.put("testData", testData);
+            params.put("REPORT_CONNECTION", db);
+
+            URL urlLink = this.getClass().getClassLoader().getResource("jasperRepData/data");
+            String Dir_path = urlLink.toURI().toString();
+            params.put("SUBREPORT", Dir_path);
+
+            URL logoLink = this.getClass().getClassLoader().getResource("reportData/Img/myTest.jpg");
+            String logoLocaton = logoLink.toURI().toString();
+            params.put("LogoLink", logoLocaton);
+
+            InputStream reportstream = this.getClass().getClassLoader().getResourceAsStream("reportData/test.jasper");
+            JasperRunManager.runReportToPdfStream(reportstream, outStream, params, c);
+
+            c.close();
+            c = null;
+            params = null;
+            outStream.flush();
+            outStream.close();
+        } catch (Exception e) {
+            logger.error("Error occurred while test report : " + e.getMessage());
+        }
+    }
+	-----------------------------------------------------------------------
+	
+	@Component
+    public class DBFacade {
+	InputStream input = null;
+    private Connection con = null;
+    Properties prop = new Properties();
+    public DBFacade() {
+    }
+
+    public Connection connect() {
+        try {
+            String fileData = "application.properties";
+            inputData = getClass().getClassLoader().getResourceAsStream(fileData);
+            prop.load(inputData);
+            String hostName = prop.getProperty("db.host");
+            String port = prop.getProperty("db.port");
+            String user = prop.getProperty("spring.datasource.username");
+            String password = prop.getProperty("spring.datasource.password");
+            String database = prop.getProperty("db.database");
+
+            if (con == null || con.isClosed()) {
+                Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
+                String dbUrl = "jdbc:mysql://" + hostName + ":" + port + "/" + database;
+                con = DriverManager.getConnection(dbUrl, username, password);
+            }
+        } catch (CommunicationsException ex) {
+          
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return con;
+    }
+
+	
+	
+	
+	
